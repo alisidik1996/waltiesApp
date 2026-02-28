@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walties's Reservation App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div>
+            <h2>Walties's Reservation App</h2>
+            <p class="subtitle">Kelola data reservasi</p>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-primary" onclick="openModal()">+ Tambah Reservasi</button>
+            <button class="btn-secondary" onclick="loadData()">Refresh</button>
+        </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>No HP</th>
+                    <th>Hari</th>
+                    <th>Tanggal</th>
+                    <th>Jam</th>
+                    <th>Pax</th>
+                    <th>Deposit</th>
+                    <th>Area</th>
+                    <th>Meja</th>
+                    <th>Acara</th>
+                    <th>Diterima</th>
+                    <th>Tgl Diterima</th>
+                    <th>Paket</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="reservationModal" class="modal">
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h3>Form Reservasi</h3>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+
+        <form id="reservationForm">
+
+            <div class="form-group">
+                <label>Nama</label>
+                <input placeholder="Masukkan nama tamu" name="nama" required>
+            </div>
+
+            <div class="form-group">
+                <label>No HP</label>
+                <input placeholder="Contoh: 08123456789" name="no_hp" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Hari</label>
+                    <select name="hari">
+                        <option>Senin</option>
+                        <option>Selasa</option>
+                        <option>Rabu</option>
+                        <option>Kamis</option>
+                        <option>Jumat</option>
+                        <option>Sabtu</option>
+                        <option>Minggu</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" name="tanggal" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Jam Reservasi</label>
+                    <input type="time" name="jam" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Number of Pax</label>
+                    <input type="number" name="pax">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Deposit</label>
+                <input type="number" name="deposit">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Area</label>
+                    <select name="area">
+                        <option>Indoor</option>
+                        <option>Outdoor</option>
+                        <option>SW</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Meja</label>
+                    <select name="meja" id="mejaSelect"></select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Keperluan Acara</label>
+                <input name="acara">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Diterima Oleh</label>
+                    <input name="diterima_oleh">
+                </div>
+
+                <div class="form-group">
+                    <label>Tanggal Diterima</label>
+                    <input type="date" name="tanggal_diterima">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Paket</label>
+                <input name="paket">
+            </div>
+
+            <button type="submit" class="btn-submit">Simpan Reservasi</button>
+
+        </form>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

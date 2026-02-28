@@ -1,7 +1,7 @@
 {
-  "name": "node-express-web",
+  "name": "express-web",
   "version": "1.0.0",
-  "description": "",
+  "description": "This is a simple hello world express.js server.",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
@@ -10,10 +10,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
     "ejs": "^3.1.9",
-    "express": "^4.21.2"
+    "express": "^4.22.1",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
-  }
+  },
+  "keywords": []
 }
