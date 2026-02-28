@@ -168,3 +168,108 @@ form button:hover {
   from { opacity: 0; transform: translateY(-15px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===== AVAILABILITY ===== */
+
+.availability-card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
+}
+
+.availability-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.availability-header h3 {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.availability-inputs input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-right: 8px;
+}
+
+.availability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.area-card {
+  border: 1px solid #f1f1f1;
+  border-radius: 10px;
+  padding: 15px;
+  background: #fafafa;
+}
+
+.area-card h4 {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+.badge-green {
+  background: #e6f8ec;
+  color: #1a7f37;
+}
+
+.badge-red {
+  background: #fdeaea;
+  color: #b42318;
+}
+
+.meja-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.meja-item {
+  padding: 6px;
+  font-size: 12px;
+  border-radius: 6px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+.meja-available {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.meja-booked {
+  background: #fef2f2;
+  border-color: #fecaca;
+  opacity: 0.7;
+}
+
+.btn-delete {
+  background: #fdeaea;
+  color: #b42318;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-delete:hover {
+  background: #f8d7da;
+}

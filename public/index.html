@@ -24,6 +24,19 @@
     </div>
 
     <!-- TABLE CARD -->
+    <div class="availability-card">
+        <div class="availability-header">
+          <h3>Cek Ketersediaan Meja</h3>
+          <div class="availability-inputs">
+            <input type="date" id="checkTanggal">
+            <input type="time" id="checkJam">
+            <button class="btn-primary" onclick="checkAvailability()">Cek</button>
+          </div>
+        </div>
+      
+        <div id="availabilityResult" class="availability-grid"></div>
+      </div>
+
     <div class="card">
         <table>
             <thead>
@@ -42,6 +55,7 @@
                     <th>Diterima</th>
                     <th>Tgl Diterima</th>
                     <th>Paket</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>

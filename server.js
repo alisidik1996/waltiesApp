@@ -81,4 +81,16 @@ app.post("/reservations", (req, res) => {
     );
 });
 
+app.delete("/reservations/:id", (req, res) => {
+    const id = req.params.id;
+
+    db.run("DELETE FROM reservations WHERE id = ?", [id], function(err) {
+        if (err) {
+            return res.json({ error: true });
+        }
+
+        res.json({ success: true });
+    });
+});
+
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
