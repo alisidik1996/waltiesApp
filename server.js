@@ -93,4 +93,19 @@ app.delete("/reservations/:id", (req, res) => {
     });
 });
 
+app.get("/reservations/search", (req, res) => {
+    const keyword = req.query.q || "";
+
+    db.all(
+        `SELECT * FROM reservations 
+         WHERE nama LIKE ? OR no_hp LIKE ?
+         ORDER BY id DESC`,
+        [`%${keyword}%`, `%${keyword}%`],
+        (err, rows) => {
+            if (err) return res.json([]);
+            res.json(rows);
+        }
+    );
+});
+
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));

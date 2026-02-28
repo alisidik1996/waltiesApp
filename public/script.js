@@ -128,10 +128,7 @@ async function checkAvailability() {
   /* ===============================
      LOAD DATA TABLE
   =================================*/
-  async function loadData() {
-    const res = await fetch("/reservations");
-    const data = await res.json();
-  
+  function renderTable(data) {
     const tbody = document.getElementById("tableBody");
     tbody.innerHTML = "";
   
@@ -153,16 +150,21 @@ async function checkAvailability() {
           <td>${r.tanggal_diterima}</td>
           <td>${r.paket}</td>
           <td>
-      <button class="btn-delete" onclick="deleteReservation(${r.id})">
-        Hapus
-      </button>
-    </td>
-          
+            <button class="btn-delete" onclick="deleteReservation(${r.id})">
+              Hapus
+            </button>
+          </td>
         </tr>
       `;
     });
   }
   
+  async function loadData() {
+    const res = await fetch("/reservations");
+    const data = await res.json();
+    renderTable(data);
+  }
+
   /* ===============================
      SUBMIT FORM
   =================================*/
@@ -194,6 +196,7 @@ async function checkAvailability() {
     });
     
     loadData();
+
     async function deleteReservation(id) {
         const confirmDelete = confirm("Yakin mau hapus reservasi ini?");
         if (!confirmDelete) return;
@@ -211,3 +214,17 @@ async function checkAvailability() {
           alert("Gagal menghapus data");
         }
       }
+
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", async function () {
+  const keyword = this.value.trim();
+
+  if (keyword === "") {
+    loadData();
+    return;
+  }
+
+  const res = await fetch(`/reservations/search?q=${keyword}`);
+  const data = await res.json();
+  renderTable(data);
+});

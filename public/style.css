@@ -273,3 +273,23 @@ form button:hover {
 .btn-delete:hover {
   background: #f8d7da;
 }
+.table-toolbar {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.search-input {
+  width: 280px;
+  padding: 10px 14px;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #111;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+}
