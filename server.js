@@ -108,4 +108,45 @@ app.get("/reservations/search", (req, res) => {
     );
 });
 
+const ExcelJS = require("exceljs");
+
+app.get("/export", async (req, res) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Reservasi");
+
+    db.all("SELECT * FROM reservations", [], async (err, rows) => {
+
+        worksheet.columns = [
+            { header: "Nama", key: "nama" },
+            { header: "No HP", key: "no_hp" },
+            { header: "Hari", key: "hari" },
+            { header: "Tanggal", key: "tanggal" },
+            { header: "Jam", key: "jam" },
+            { header: "Pax", key: "pax" },
+            { header: "Deposit", key: "deposit" },
+            { header: "Area", key: "area" },
+            { header: "Meja", key: "meja" },
+            { header: "Acara", key: "acara" },
+            { header: "Diterima", key: "diterima_oleh" },
+            { header: "Tgl Diterima	", key: "tanggal_diterima" },
+            { header: "Paket", key: "paket" }
+
+        ];
+
+        worksheet.addRows(rows);
+
+        res.setHeader(
+            "Content-Type",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        res.setHeader(
+            "Content-Disposition",
+            "attachment; filename=reservasi.xlsx"
+        );
+
+        await workbook.xlsx.write(res);
+        res.end();
+    });
+});
+
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
