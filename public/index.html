@@ -23,33 +23,36 @@
         </div>
     </div>
 
-    <!-- TABLE CARD -->
+    <!-- CEK KETERSEDIAAN -->
     <div class="availability-card">
         <div class="availability-header">
-          <h3>Cek Ketersediaan Meja</h3>
-          <div class="availability-inputs">
-            <input type="date" id="checkTanggal">
-            <input type="time" id="checkJam">
-            <button class="btn-primary" onclick="checkAvailability()">Cek</button>
-          </div>
+            <h3>Cek Ketersediaan Meja</h3>
+            <div class="availability-inputs">
+                <input type="date" id="checkTanggal">
+                <input type="time" id="checkJam">
+                <button class="btn-primary" onclick="checkAvailability()">Cek</button>
+            </div>
         </div>
-      
         <div id="availabilityResult" class="availability-grid"></div>
-      </div>
-
-    <div class="card">
-        <!-- SEARCH BAR -->
-    <div class="table-toolbar">
-        <input 
-            type="text" 
-            id="searchInput" 
-            placeholder="Cari Nama / No HP..."
-            class="search-input"
-        />
     </div>
-    <button onclick="window.location='/export'" class="btn-secondary">
-        Export Excel
-    </button>
+
+    <!-- TABLE CARD -->
+    <div class="card">
+
+        <!-- TOOLBAR -->
+        <div class="table-toolbar">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Cari Nama / No HP..."
+                class="search-input"
+            />
+
+            <button onclick="window.location='/export'" class="btn-export">
+            Export
+            </button>
+        </div>
+
         <table>
             <thead>
                 <tr>
@@ -72,13 +75,14 @@
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
+
         <div class="pagination">
             <button onclick="prevPage()">&lt;</button>
             <span id="pageInfo"></span>
             <button onclick="nextPage()">&gt;</button>
         </div>
-    </div>
 
+    </div>
 </div>
 
 <!-- MODAL -->
@@ -150,8 +154,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Meja</label>
-                    <select name="meja" id="mejaSelect"></select>
+                    <label>Meja (Bisa pilih lebih dari satu)</label>
+                    <select name="meja" id="mejaSelect" multiple size="6"></select>
+                    <small class="helper-text">
+                        Tekan CTRL (Windows) / CMD (Mac) untuk pilih lebih dari satu meja
+                    </small>
+                    <div id="totalSeatInfo" class="seat-info"></div>
                 </div>
             </div>
 

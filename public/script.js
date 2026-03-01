@@ -49,6 +49,15 @@ const mejaSelect = document.getElementById("mejaSelect");
 const areaSelect = document.querySelector("select[name='area']");
 const modal = document.getElementById("reservationModal");
 const searchInput = document.getElementById("searchInput");
+const totalSeatInfo = document.getElementById("totalSeatInfo");
+
+/* ===============================
+   HELPER: GET SEAT NUMBER
+=================================*/
+function getSeatCount(meja) {
+  const match = meja.match(/(\d+)\s*Seats/i);
+  return match ? parseInt(match[1]) : 0;
+}
 
 /* ===============================
    RENDER MEJA BERDASARKAN AREA
@@ -64,7 +73,24 @@ function renderMeja(area) {
     opt.textContent = meja;
     mejaSelect.appendChild(opt);
   });
+
+  updateTotalSeat();
 }
+
+/* ===============================
+   HITUNG TOTAL SEAT
+=================================*/
+function updateTotalSeat() {
+  const selected = Array.from(mejaSelect.selectedOptions).map(o => o.value);
+  const total = selected.reduce((sum, meja) => sum + getSeatCount(meja), 0);
+
+  totalSeatInfo.innerHTML =
+    selected.length > 0
+      ? `<strong>Total Seats:</strong> ${total}`
+      : "";
+}
+
+mejaSelect.addEventListener("change", updateTotalSeat);
 
 /* ===============================
    MODAL
@@ -85,14 +111,14 @@ window.addEventListener("click", function (event) {
 });
 
 /* ===============================
-   AREA CHANGE EVENT
+   AREA CHANGE
 =================================*/
 areaSelect.addEventListener("change", function () {
   renderMeja(this.value);
 });
 
 /* ===============================
-   CEK KETERSEDIAAN
+   CEK KETERSEDIAAN (MULTI MEJA)
 =================================*/
 async function checkAvailability() {
   const tanggal = document.getElementById("checkTanggal").value;
@@ -107,23 +133,18 @@ async function checkAvailability() {
   const data = await res.json();
 
   const booked = data
-    .filter(r => r.tanggal === tanggal && r.jam === jam)
-    .map(r => r.meja);
+    .filter(r => r.tanggal === tanggal)
+    .map(r => JSON.parse(r.meja))
+    .flat();
 
   let resultHTML = "";
 
   for (let area in mejaList) {
     const allMeja = mejaList[area];
-    const available = allMeja.filter(m => !booked.includes(m));
 
     resultHTML += `
       <div class="area-card">
-        <h4>
-          ${area}
-          <span class="badge badge-green">${available.length} Available</span>
-          <span class="badge badge-red">${booked.filter(m => allMeja.includes(m)).length} Booked</span>
-        </h4>
-
+        <h4>${area}</h4>
         <div class="meja-grid">
           ${allMeja.map(m => {
             const isBooked = booked.includes(m);
@@ -142,7 +163,7 @@ async function checkAvailability() {
 }
 
 /* ===============================
-   RENDER TABLE (WITH PAGINATION)
+   RENDER TABLE
 =================================*/
 function renderTable() {
   const tbody = document.getElementById("tableBody");
@@ -155,6 +176,11 @@ function renderTable() {
   const paginated = displayedData.slice(start, start + rowsPerPage);
 
   paginated.forEach((r, i) => {
+    const mejaDisplay =
+      typeof r.meja === "string"
+        ? JSON.parse(r.meja).join(", ")
+        : r.meja.join(", ");
+
     tbody.innerHTML += `
       <tr>
         <td>${start + i + 1}</td>
@@ -166,7 +192,7 @@ function renderTable() {
         <td>${r.pax}</td>
         <td>${r.deposit}</td>
         <td>${r.area}</td>
-        <td>${r.meja}</td>
+        <td>${mejaDisplay}</td>
         <td>${r.acara}</td>
         <td>${r.diterima_oleh}</td>
         <td>${r.tanggal_diterima}</td>
@@ -217,8 +243,7 @@ function prevPage() {
    DELETE
 =================================*/
 async function deleteReservation(id) {
-  const confirmDelete = confirm("Yakin mau hapus reservasi ini?");
-  if (!confirmDelete) return;
+  if (!confirm("Yakin mau hapus reservasi ini?")) return;
 
   const res = await fetch(`/reservations/${id}`, {
     method: "DELETE"
@@ -227,15 +252,12 @@ async function deleteReservation(id) {
   const result = await res.json();
 
   if (result.success) {
-    alert("Reservasi berhasil dihapus");
     loadData();
-  } else {
-    alert("Gagal menghapus data");
   }
 }
 
 /* ===============================
-   SEARCH (CLIENT SIDE)
+   SEARCH
 =================================*/
 searchInput.addEventListener("input", function () {
   const keyword = this.value.trim().toLowerCase();
@@ -254,7 +276,7 @@ searchInput.addEventListener("input", function () {
 });
 
 /* ===============================
-   SUBMIT FORM
+   SUBMIT FORM (MULTI MEJA + VALIDASI SEAT)
 =================================*/
 document
   .getElementById("reservationForm")
@@ -262,6 +284,25 @@ document
     e.preventDefault();
 
     const formData = Object.fromEntries(new FormData(this));
+
+    const selectedMeja = Array.from(mejaSelect.selectedOptions).map(o => o.value);
+
+    if (selectedMeja.length === 0) {
+      alert("Pilih minimal 1 meja");
+      return;
+    }
+
+    const totalSeat = selectedMeja.reduce(
+      (sum, meja) => sum + getSeatCount(meja),
+      0
+    );
+
+    if (parseInt(formData.pax) > totalSeat) {
+      alert(`Jumlah pax melebihi total seat (${totalSeat})`);
+      return;
+    }
+
+    formData.meja = selectedMeja;
 
     const res = await fetch("/reservations", {
       method: "POST",
@@ -272,14 +313,13 @@ document
     const result = await res.json();
 
     if (result.error) {
-      alert(
-        `Meja sudah dibooking!\n\nNama: ${result.data.nama}\nTanggal: ${result.data.tanggal}\nJam: ${result.data.jam}`
-      );
+      alert(result.message);
     } else {
       alert("Reservasi berhasil disimpan!");
       closeModal();
       loadData();
       this.reset();
+      totalSeatInfo.innerHTML = "";
     }
   });
 

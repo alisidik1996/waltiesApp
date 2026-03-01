@@ -2,6 +2,7 @@ const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const ExcelJS = require("exceljs");
 
 const app = express();
 app.use(cors());
@@ -10,7 +11,9 @@ app.use(express.static("public"));
 
 const db = new sqlite3.Database("./database.db");
 
-// Create table
+/* ===============================
+   CREATE TABLE
+=================================*/
 db.run(`
 CREATE TABLE IF NOT EXISTS reservations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +25,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     pax INTEGER,
     deposit INTEGER,
     area TEXT,
-    meja TEXT,
+    meja TEXT, -- JSON STRING
     acara TEXT,
     diterima_oleh TEXT,
     tanggal_diterima TEXT,
@@ -30,30 +33,55 @@ CREATE TABLE IF NOT EXISTS reservations (
 )
 `);
 
-// Get all reservations
+/* ===============================
+   GET ALL RESERVATIONS
+=================================*/
 app.get("/reservations", (req, res) => {
-    db.all("SELECT * FROM reservations", [], (err, rows) => {
+    db.all("SELECT * FROM reservations ORDER BY id DESC", [], (err, rows) => {
         res.json(rows);
     });
 });
 
-// Add reservation
+/* ===============================
+   ADD RESERVATION (MULTI MEJA)
+=================================*/
 app.post("/reservations", (req, res) => {
     const r = req.body;
 
-    // Check duplicate meja + hari + jam
-    db.get(
-        `SELECT * FROM reservations WHERE meja=? AND hari=? AND jam=?`,
-        [r.meja, r.hari, r.jam],
-        (err, row) => {
-            if (row) {
-                return res.json({
-                    error: true,
-                    message: "Meja sudah dibooking!",
-                    data: row
-                });
+    if (!Array.isArray(r.meja) || r.meja.length === 0) {
+        return res.json({
+            error: true,
+            message: "Pilih minimal 1 meja"
+        });
+    }
+
+    // Ambil semua reservasi di tanggal yang sama
+    db.all(
+        `SELECT * FROM reservations WHERE tanggal=?`,
+        [r.tanggal],
+        (err, rows) => {
+
+            if (err) {
+                return res.json({ error: true });
             }
 
+            // Loop semua reservasi existing
+            for (let existing of rows) {
+
+                const existingMeja = JSON.parse(existing.meja);
+
+                // Cek apakah ada meja yang bentrok
+                for (let meja of r.meja) {
+                    if (existingMeja.includes(meja)) {
+                        return res.json({
+                            error: true,
+                            message: `Meja ${meja} sudah dibooking di tanggal tersebut`
+                        });
+                    }
+                }
+            }
+
+            // Jika aman, insert
             db.run(
                 `INSERT INTO reservations 
                 (nama,no_hp,hari,tanggal,jam,pax,deposit,area,meja,acara,diterima_oleh,tanggal_diterima,paket)
@@ -67,7 +95,7 @@ app.post("/reservations", (req, res) => {
                     r.pax,
                     r.deposit,
                     r.area,
-                    r.meja,
+                    JSON.stringify(r.meja), // 🔥 simpan array jadi JSON
                     r.acara,
                     r.diterima_oleh,
                     r.tanggal_diterima,
@@ -81,6 +109,9 @@ app.post("/reservations", (req, res) => {
     );
 });
 
+/* ===============================
+   DELETE RESERVATION
+=================================*/
 app.delete("/reservations/:id", (req, res) => {
     const id = req.params.id;
 
@@ -88,11 +119,13 @@ app.delete("/reservations/:id", (req, res) => {
         if (err) {
             return res.json({ error: true });
         }
-
         res.json({ success: true });
     });
 });
 
+/* ===============================
+   SEARCH
+=================================*/
 app.get("/reservations/search", (req, res) => {
     const keyword = req.query.q || "";
 
@@ -108,13 +141,14 @@ app.get("/reservations/search", (req, res) => {
     );
 });
 
-const ExcelJS = require("exceljs");
-
+/* ===============================
+   EXPORT EXCEL
+=================================*/
 app.get("/export", async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Reservasi");
 
-    db.all("SELECT * FROM reservations", [], async (err, rows) => {
+    db.all("SELECT * FROM reservations ORDER BY id DESC", [], async (err, rows) => {
 
         worksheet.columns = [
             { header: "Nama", key: "nama" },
@@ -128,12 +162,16 @@ app.get("/export", async (req, res) => {
             { header: "Meja", key: "meja" },
             { header: "Acara", key: "acara" },
             { header: "Diterima", key: "diterima_oleh" },
-            { header: "Tgl Diterima	", key: "tanggal_diterima" },
+            { header: "Tanggal Diterima", key: "tanggal_diterima" },
             { header: "Paket", key: "paket" }
-
         ];
 
-        worksheet.addRows(rows);
+        const formattedRows = rows.map(r => ({
+            ...r,
+            meja: JSON.parse(r.meja).join(", ")
+        }));
+
+        worksheet.addRows(formattedRows);
 
         res.setHeader(
             "Content-Type",
@@ -149,4 +187,9 @@ app.get("/export", async (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+/* ===============================
+   START SERVER
+=================================*/
+app.listen(3000, () => 
+    console.log("Server running on http://localhost:3000")
+);
