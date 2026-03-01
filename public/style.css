@@ -293,3 +293,74 @@ form button:hover {
   border-color: #111;
   box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
 }
+
+/* ===============================
+   PAGINATION
+=================================*/
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pagination button {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  min-width: 70px;
+}
+
+.pagination button:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+#pageInfo {
+  font-size: 13px;
+  color: #6b7280;
+  min-width: 100px;
+  text-align: center;
+}
+
+/* ===============================
+   EXPORT BUTTON
+=================================*/
+
+.btn-secondary {
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.25s ease;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.15);
+}
+
+.btn-secondary:hover {
+  background: #1e40af;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(29, 78, 216, 0.25);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
