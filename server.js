@@ -25,13 +25,58 @@ CREATE TABLE IF NOT EXISTS reservations (
     pax INTEGER,
     deposit INTEGER,
     area TEXT,
-    meja TEXT, -- JSON STRING
+    meja TEXT,
     acara TEXT,
     diterima_oleh TEXT,
     tanggal_diterima TEXT,
-    paket TEXT
+    keterangan TEXT
 )
 `);
+
+/* ===============================
+   HELPER: DETECT AREA FROM MEJA
+=================================*/
+const mejaList = {
+  Indoor: [
+    "(Indoor)Sofa Coklat: 5 Seats",
+    "(Indoor)Sofa Abu: 7 Seats",
+    "(Indoor)Table 1: 4 Seats",
+    "(Indoor)Table 2: 4 Seats",
+    "(Indoor)Table 3: 4 Seats",
+    "(Indoor)Table 4: 2 Seats",
+    "(Indoor)Table 5: 2 Seats"
+  ],
+  Outdoor: [
+    "(Outdoor)Sofa Luar: 8 Seats",
+    "(Outdoor)Table 20: 4 Seats",
+    "(Outdoor)Table 21: 4 Seats",
+    "(Outdoor)Table 22: 4 Seats",
+    "(Outdoor)Table 23: 4 Seats",
+    "(Outdoor)Table 24: 4 Seats",
+    "(Outdoor)Table 25: 4 Seats"
+  ],
+  SW: [
+    "(SW)Table 1: 2 Seats",
+    "(SW)Table 2: 2 Seats",
+    "(SW)Table 3: 4 Seats",
+    "(SW)Table 4: 4 Seats",
+    "(SW)Table 5: 4 Seats",
+    "(SW)Table 6: 2 Seats",
+    "(SW)Table 7: 2 Seats",
+    "(SW)Table 8: 4 Seats",
+    "(SW)Table 9: 2 Seats",
+    "(SW)Table 10: 2 Seats"
+  ]
+};
+
+function getAreaFromMeja(meja) {
+  for (let area in mejaList) {
+    if (mejaList[area].includes(meja)) {
+      return area;
+    }
+  }
+  return "-";
+}
 
 /* ===============================
    GET ALL RESERVATIONS
@@ -43,7 +88,7 @@ app.get("/reservations", (req, res) => {
 });
 
 /* ===============================
-   ADD RESERVATION (MULTI MEJA)
+   ADD RESERVATION
 =================================*/
 app.post("/reservations", (req, res) => {
     const r = req.body;
@@ -55,7 +100,6 @@ app.post("/reservations", (req, res) => {
         });
     }
 
-    // Ambil semua reservasi di tanggal yang sama
     db.all(
         `SELECT * FROM reservations WHERE tanggal=?`,
         [r.tanggal],
@@ -65,12 +109,15 @@ app.post("/reservations", (req, res) => {
                 return res.json({ error: true });
             }
 
-            // Loop semua reservasi existing
             for (let existing of rows) {
 
-                const existingMeja = JSON.parse(existing.meja);
+                let existingMeja;
+                try {
+                    existingMeja = JSON.parse(existing.meja);
+                } catch {
+                    existingMeja = [existing.meja];
+                }
 
-                // Cek apakah ada meja yang bentrok
                 for (let meja of r.meja) {
                     if (existingMeja.includes(meja)) {
                         return res.json({
@@ -81,10 +128,13 @@ app.post("/reservations", (req, res) => {
                 }
             }
 
-            // Jika aman, insert
+            // 🔥 AUTO DETECT AREA
+            const areaSet = [...new Set(r.meja.map(getAreaFromMeja))];
+            const areaString = areaSet.join(", ");
+
             db.run(
                 `INSERT INTO reservations 
-                (nama,no_hp,hari,tanggal,jam,pax,deposit,area,meja,acara,diterima_oleh,tanggal_diterima,paket)
+                (nama,no_hp,hari,tanggal,jam,pax,deposit,area,meja,acara,diterima_oleh,tanggal_diterima,keterangan)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 [
                     r.nama,
@@ -94,12 +144,12 @@ app.post("/reservations", (req, res) => {
                     r.jam,
                     r.pax,
                     r.deposit,
-                    r.area,
-                    JSON.stringify(r.meja), // 🔥 simpan array jadi JSON
+                    areaString,
+                    JSON.stringify(r.meja),
                     r.acara,
                     r.diterima_oleh,
                     r.tanggal_diterima,
-                    r.paket
+                    r.keterangan
                 ],
                 function () {
                     res.json({ success: true });
@@ -110,7 +160,7 @@ app.post("/reservations", (req, res) => {
 });
 
 /* ===============================
-   DELETE RESERVATION
+   DELETE
 =================================*/
 app.delete("/reservations/:id", (req, res) => {
     const id = req.params.id;
@@ -163,13 +213,22 @@ app.get("/export", async (req, res) => {
             { header: "Acara", key: "acara" },
             { header: "Diterima", key: "diterima_oleh" },
             { header: "Tanggal Diterima", key: "tanggal_diterima" },
-            { header: "Paket", key: "paket" }
+            { header: "Keterangan", key: "keterangan" }
         ];
 
-        const formattedRows = rows.map(r => ({
-            ...r,
-            meja: JSON.parse(r.meja).join(", ")
-        }));
+        const formattedRows = rows.map(r => {
+            let mejaParsed;
+            try {
+                mejaParsed = JSON.parse(r.meja);
+            } catch {
+                mejaParsed = [r.meja];
+            }
+
+            return {
+                ...r,
+                meja: mejaParsed.join(", ")
+            };
+        });
 
         worksheet.addRows(formattedRows);
 
@@ -190,6 +249,6 @@ app.get("/export", async (req, res) => {
 /* ===============================
    START SERVER
 =================================*/
-app.listen(3000, () => 
+app.listen(3000, () =>
     console.log("Server running on http://localhost:3000")
 );

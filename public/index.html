@@ -69,7 +69,7 @@
                     <th>Acara</th>
                     <th>Diterima</th>
                     <th>Tgl Diterima</th>
-                    <th>Paket</th>
+                    <th>Keterangan</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -100,12 +100,12 @@
                 <label>Nama</label>
                 <input placeholder="Masukkan nama tamu" name="nama" required>
             </div>
-
+        
             <div class="form-group">
                 <label>No HP</label>
                 <input placeholder="Contoh: 08123456789" name="no_hp" required>
             </div>
-
+        
             <div class="form-row">
                 <div class="form-group">
                     <label>Hari</label>
@@ -119,74 +119,61 @@
                         <option>Minggu</option>
                     </select>
                 </div>
-
+        
                 <div class="form-group">
                     <label>Tanggal</label>
                     <input type="date" name="tanggal" required>
                 </div>
             </div>
-
+        
             <div class="form-row">
                 <div class="form-group">
                     <label>Jam Reservasi</label>
                     <input type="time" name="jam" required>
                 </div>
-
+        
                 <div class="form-group">
                     <label>Number of Pax</label>
                     <input type="number" name="pax">
                 </div>
             </div>
-
+        
             <div class="form-group">
                 <label>Deposit</label>
                 <input type="number" name="deposit">
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Area</label>
-                    <select name="area">
-                        <option>Indoor</option>
-                        <option>Outdoor</option>
-                        <option>SW</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Meja (Bisa pilih lebih dari satu)</label>
-                    <select name="meja" id="mejaSelect" multiple size="6"></select>
-                    <small class="helper-text">
-                        Tekan CTRL (Windows) / CMD (Mac) untuk pilih lebih dari satu meja
-                    </small>
-                    <div id="totalSeatInfo" class="seat-info"></div>
-                </div>
+        
+            <!-- 🔥 MEJA FULL WIDTH -->
+            <div class="form-group">
+                <label>Meja (Bisa pilih lebih dari satu & lintas area)</label>
+                <div id="mejaContainer" class="meja-checkbox-container"></div>
+                <div id="totalSeatInfo" class="seat-info"></div>
             </div>
-
+        
             <div class="form-group">
                 <label>Keperluan Acara</label>
                 <input name="acara">
             </div>
-
+        
             <div class="form-row">
                 <div class="form-group">
                     <label>Diterima Oleh</label>
                     <input name="diterima_oleh">
                 </div>
-
+        
                 <div class="form-group">
                     <label>Tanggal Diterima</label>
                     <input type="date" name="tanggal_diterima">
                 </div>
             </div>
-
+        
             <div class="form-group">
-                <label>Paket</label>
-                <input name="paket">
+                <label>Keterangan</label>
+                <input name="keterangan">
             </div>
-
+        
             <button type="submit" class="btn-submit">Simpan Reservasi</button>
-
+        
         </form>
     </div>
 </div>

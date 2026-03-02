@@ -11,78 +11,104 @@ const rowsPerPage = 20;
 =================================*/
 const mejaList = {
   Indoor: [
-    "Sofa Coklat: 5 Seats",
-    "Sofa Abu: 7 Seats",
-    "Table 3: 4 Seats",
-    "Table 2: 4 Seats",
-    "Table 1: 4 Seats",
-    "Table 4: 2 Seats",
-    "Table 5: 2 Seats"
+    "(Indoor)Sofa Coklat: 5 Seats",
+    "(Indoor)Sofa Abu: 7 Seats",
+    "(Indoor)Table 1: 4 Seats",
+    "(Indoor)Table 2: 4 Seats",
+    "(Indoor)Table 3: 4 Seats",
+    "(Indoor)Table 4: 2 Seats",
+    "(Indoor)Table 5: 2 Seats"
   ],
   Outdoor: [
-    "Table 21: 4 Seats",
-    "Table 22: 4 Seats",
-    "Table 23: 4 Seats",
-    "Table 24: 4 Seats",
-    "Table 25: 4 Seats",
-    "Table 20: 4 Seats",
-    "Sofa Luar: 8 Seats"
+    "(Outdoor)Sofa Luar: 8 Seats",
+    "(Outdoor)Table 20: 4 Seats",
+    "(Outdoor)Table 21: 4 Seats",
+    "(Outdoor)Table 22: 4 Seats",
+    "(Outdoor)Table 23: 4 Seats",
+    "(Outdoor)Table 24: 4 Seats",
+    "(Outdoor)Table 25: 4 Seats"
   ],
   SW: [
-    "SW Table 5: 4 Seats",
-    "SW Table 8: 4 Seats",
-    "SW Table 4: 4 Seats",
-    "SW Table 3: 4 Seats",
-    "SW Table 2: 2 Seats",
-    "SW Table 1: 2 Seats",
-    "SW Table 6: 2 Seats",
-    "SW Table 9: 2 Seats",
-    "SW Table 7: 2 Seats",
-    "SW Table 10: 2 Seats"
+    "(SW)Table 1: 2 Seats",
+    "(SW)Table 2: 2 Seats",
+    "(SW)Table 3: 4 Seats",
+    "(SW)Table 4: 4 Seats",
+    "(SW)Table 5: 4 Seats",
+    "(SW)Table 6: 2 Seats",
+    "(SW)Table 7: 2 Seats",
+    "(SW)Table 8: 4 Seats",
+    "(SW)Table 9: 2 Seats",
+    "(SW)Table 10: 2 Seats"
   ]
 };
 
 /* ===============================
    DOM ELEMENTS
 =================================*/
-const mejaSelect = document.getElementById("mejaSelect");
-const areaSelect = document.querySelector("select[name='area']");
+const mejaContainer = document.getElementById("mejaContainer");
 const modal = document.getElementById("reservationModal");
 const searchInput = document.getElementById("searchInput");
 const totalSeatInfo = document.getElementById("totalSeatInfo");
 
 /* ===============================
-   HELPER: GET SEAT NUMBER
+   HELPER
 =================================*/
 function getSeatCount(meja) {
   const match = meja.match(/(\d+)\s*Seats/i);
   return match ? parseInt(match[1]) : 0;
 }
 
+function getAreaFromMeja(meja) {
+  for (let area in mejaList) {
+    if (mejaList[area].includes(meja)) {
+      return area;
+    }
+  }
+  return "-";
+}
+
 /* ===============================
-   RENDER MEJA BERDASARKAN AREA
+   RENDER SEMUA MEJA (GROUPED)
 =================================*/
-function renderMeja(area) {
-  mejaSelect.innerHTML = "";
+function renderMeja() {
+  mejaContainer.innerHTML = "";
 
-  if (!mejaList[area]) return;
+  for (let area in mejaList) {
 
-  mejaList[area].forEach(meja => {
-    const opt = document.createElement("option");
-    opt.value = meja;
-    opt.textContent = meja;
-    mejaSelect.appendChild(opt);
-  });
+    const title = document.createElement("div");
+    title.className = "meja-area-title";
+    title.textContent = area;
+    mejaContainer.appendChild(title);
+
+    mejaList[area].forEach(meja => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "meja-item-wrapper";
+
+      wrapper.innerHTML = `
+        <input type="checkbox" value="${meja}">
+        <label>${meja}</label>
+      `;
+
+      mejaContainer.appendChild(wrapper);
+    });
+  }
 
   updateTotalSeat();
 }
+
+mejaContainer.addEventListener("change", updateTotalSeat);
 
 /* ===============================
    HITUNG TOTAL SEAT
 =================================*/
 function updateTotalSeat() {
-  const selected = Array.from(mejaSelect.selectedOptions).map(o => o.value);
-  const total = selected.reduce((sum, meja) => sum + getSeatCount(meja), 0);
+  const selected = Array.from(
+    mejaContainer.querySelectorAll("input[type='checkbox']:checked")
+  ).map(cb => cb.value);
+
+  const total = selected.reduce((sum, meja) => {
+    return sum + getSeatCount(meja);
+  }, 0);
 
   totalSeatInfo.innerHTML =
     selected.length > 0
@@ -90,14 +116,12 @@ function updateTotalSeat() {
       : "";
 }
 
-mejaSelect.addEventListener("change", updateTotalSeat);
-
 /* ===============================
    MODAL
 =================================*/
 function openModal() {
   modal.style.display = "block";
-  renderMeja(areaSelect.value);
+  renderMeja();
 }
 
 function closeModal() {
@@ -111,14 +135,7 @@ window.addEventListener("click", function (event) {
 });
 
 /* ===============================
-   AREA CHANGE
-=================================*/
-areaSelect.addEventListener("change", function () {
-  renderMeja(this.value);
-});
-
-/* ===============================
-   CEK KETERSEDIAAN (MULTI MEJA)
+   CEK KETERSEDIAAN
 =================================*/
 async function checkAvailability() {
   const tanggal = document.getElementById("checkTanggal").value;
@@ -134,7 +151,13 @@ async function checkAvailability() {
 
   const booked = data
     .filter(r => r.tanggal === tanggal)
-    .map(r => JSON.parse(r.meja))
+    .map(r => {
+      try {
+        return JSON.parse(r.meja);
+      } catch {
+        return [r.meja];
+      }
+    })
     .flat();
 
   let resultHTML = "";
@@ -176,10 +199,18 @@ function renderTable() {
   const paginated = displayedData.slice(start, start + rowsPerPage);
 
   paginated.forEach((r, i) => {
-    const mejaDisplay =
-      typeof r.meja === "string"
-        ? JSON.parse(r.meja).join(", ")
-        : r.meja.join(", ");
+
+    let mejaParsed;
+    try {
+      mejaParsed = JSON.parse(r.meja);
+    } catch {
+      mejaParsed = [r.meja];
+    }
+
+    const mejaDisplay = mejaParsed.join(", ");
+
+    const areaSet = [...new Set(mejaParsed.map(getAreaFromMeja))];
+    const areaDisplay = areaSet.join(", ");
 
     tbody.innerHTML += `
       <tr>
@@ -191,12 +222,12 @@ function renderTable() {
         <td>${r.jam}</td>
         <td>${r.pax}</td>
         <td>${r.deposit}</td>
-        <td>${r.area}</td>
+        <td>${areaDisplay}</td>
         <td>${mejaDisplay}</td>
         <td>${r.acara}</td>
         <td>${r.diterima_oleh}</td>
         <td>${r.tanggal_diterima}</td>
-        <td>${r.paket}</td>
+        <td>${r.keterangan}</td>
         <td>
           <button class="btn-delete" onclick="deleteReservation(${r.id})">
             Hapus
@@ -276,7 +307,7 @@ searchInput.addEventListener("input", function () {
 });
 
 /* ===============================
-   SUBMIT FORM (MULTI MEJA + VALIDASI SEAT)
+   SUBMIT FORM
 =================================*/
 document
   .getElementById("reservationForm")
@@ -285,7 +316,9 @@ document
 
     const formData = Object.fromEntries(new FormData(this));
 
-    const selectedMeja = Array.from(mejaSelect.selectedOptions).map(o => o.value);
+    const selectedMeja = Array.from(
+      mejaContainer.querySelectorAll("input[type='checkbox']:checked")
+    ).map(cb => cb.value);
 
     if (selectedMeja.length === 0) {
       alert("Pilih minimal 1 meja");
