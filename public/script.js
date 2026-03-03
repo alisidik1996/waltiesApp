@@ -67,6 +67,17 @@ function getAreaFromMeja(meja) {
   return "-";
 }
 
+function formatTime(timeString) {
+    if (!timeString) return '';
+    const [hour, minute] = timeString.split(':');
+    let h = parseInt(hour);
+    const m = minute.padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12; // the hour '0' should be '12'
+    return `${h}:${m} ${ampm}`;
+}
+
 /* ===============================
    RENDER SEMUA MEJA (GROUPED)
 =================================*/
@@ -225,8 +236,8 @@ function renderTable() {
         <td>${r.no_hp}</td>
         <td>${r.hari}</td>
         <td>${r.tanggal}</td>
-        <td>${r.jam_mulai}</td>
-        <td>${r.jam_selesai}</td>
+        <td>${formatTime(r.jam_mulai)}</td>
+        <td>${formatTime(r.jam_selesai)}</td>
         <td>${r.pax}</td>
         <td>${r.deposit}</td>
         <td>${areaDisplay}</td>
