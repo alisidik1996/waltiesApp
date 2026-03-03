@@ -83,6 +83,10 @@ function getAreaFromMeja(meja) {
 =================================*/
 app.get("/reservations", (req, res) => {
     db.all("SELECT * FROM reservations ORDER BY id DESC", [], (err, rows) => {
+        if (err) {
+            console.error("Error fetching reservations:", err.message);
+            return res.status(500).json({ error: true, message: "Could not fetch reservations." });
+        }
         res.json(rows);
     });
 });
@@ -94,7 +98,7 @@ app.post("/reservations", (req, res) => {
     const r = req.body;
 
     if (!Array.isArray(r.meja) || r.meja.length === 0) {
-        return res.json({
+        return res.status(400).json({
             error: true,
             message: "Pilih minimal 1 meja"
         });
@@ -104,13 +108,12 @@ app.post("/reservations", (req, res) => {
         `SELECT * FROM reservations WHERE tanggal=?`,
         [r.tanggal],
         (err, rows) => {
-
             if (err) {
-                return res.json({ error: true });
+                console.error("Error checking existing reservations:", err.message);
+                return res.status(500).json({ error: true, message: "Could not check for existing reservations." });
             }
 
             for (let existing of rows) {
-
                 let existingMeja;
                 try {
                     existingMeja = JSON.parse(existing.meja);
@@ -120,7 +123,7 @@ app.post("/reservations", (req, res) => {
 
                 for (let meja of r.meja) {
                     if (existingMeja.includes(meja)) {
-                        return res.json({
+                        return res.status(409).json({
                             error: true,
                             message: `Meja ${meja} sudah dibooking di tanggal tersebut`
                         });
@@ -128,7 +131,6 @@ app.post("/reservations", (req, res) => {
                 }
             }
 
-            // 🔥 AUTO DETECT AREA
             const areaSet = [...new Set(r.meja.map(getAreaFromMeja))];
             const areaString = areaSet.join(", ");
 
@@ -151,13 +153,18 @@ app.post("/reservations", (req, res) => {
                     r.tanggal_diterima,
                     r.keterangan
                 ],
-                function () {
-                    res.json({ success: true });
+                function (err) { // Added 'err' parameter to catch potential errors
+                    if (err) {
+                        console.error("Error inserting reservation:", err.message);
+                        return res.status(500).json({ error: true, message: "Could not save reservation." });
+                    }
+                    res.status(201).json({ success: true, id: this.lastID }); // Return success and the new ID
                 }
             );
         }
     );
 });
+
 
 /* ===============================
    DELETE
@@ -167,7 +174,11 @@ app.delete("/reservations/:id", (req, res) => {
 
     db.run("DELETE FROM reservations WHERE id = ?", [id], function(err) {
         if (err) {
-            return res.json({ error: true });
+            console.error("Error deleting reservation:", err.message);
+            return res.status(500).json({ error: true, message: "Could not delete reservation." });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: true, message: "Reservation not found."});
         }
         res.json({ success: true });
     });
@@ -185,7 +196,10 @@ app.get("/reservations/search", (req, res) => {
          ORDER BY id DESC`,
         [`%${keyword}%`, `%${keyword}%`],
         (err, rows) => {
-            if (err) return res.json([]);
+            if (err) {
+                console.error("Error searching reservations:", err.message);
+                return res.status(500).json({ error: true, message: "Could not perform search."});
+            }
             res.json(rows);
         }
     );
@@ -195,60 +209,71 @@ app.get("/reservations/search", (req, res) => {
    EXPORT EXCEL
 =================================*/
 app.get("/export", async (req, res) => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Reservasi");
+    try {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Reservasi");
 
-    db.all("SELECT * FROM reservations ORDER BY id DESC", [], async (err, rows) => {
-
-        worksheet.columns = [
-            { header: "Nama", key: "nama" },
-            { header: "No HP", key: "no_hp" },
-            { header: "Hari", key: "hari" },
-            { header: "Tanggal", key: "tanggal" },
-            { header: "Jam", key: "jam" },
-            { header: "Pax", key: "pax" },
-            { header: "Deposit", key: "deposit" },
-            { header: "Area", key: "area" },
-            { header: "Meja", key: "meja" },
-            { header: "Acara", key: "acara" },
-            { header: "Diterima", key: "diterima_oleh" },
-            { header: "Tanggal Diterima", key: "tanggal_diterima" },
-            { header: "Keterangan", key: "keterangan" }
-        ];
-
-        const formattedRows = rows.map(r => {
-            let mejaParsed;
-            try {
-                mejaParsed = JSON.parse(r.meja);
-            } catch {
-                mejaParsed = [r.meja];
+        db.all("SELECT * FROM reservations ORDER BY id DESC", [], async (err, rows) => {
+            if (err) {
+                console.error("Error fetching reservations for export:", err.message);
+                return res.status(500).send("Could not fetch data for export.");
             }
 
-            return {
-                ...r,
-                meja: mejaParsed.join(", ")
-            };
+            worksheet.columns = [
+                { header: "Nama", key: "nama", width: 20 },
+                { header: "No HP", key: "no_hp", width: 15 },
+                { header: "Hari", key: "hari", width: 10 },
+                { header: "Tanggal", key: "tanggal", width: 12 },
+                { header: "Jam", key: "jam", width: 8 },
+                { header: "Pax", key: "pax", width: 8 },
+                { header: "Deposit", key: "deposit", width: 12 },
+                { header: "Area", key: "area", width: 15 },
+                { header: "Meja", key: "meja", width: 30 },
+                { header: "Acara", key: "acara", width: 20 },
+                { header: "Diterima", key: "diterima_oleh", width: 15 },
+                { header: "Tanggal Diterima", key: "tanggal_diterima", width: 18 },
+                { header: "Keterangan", key: "keterangan", width: 30 }
+            ];
+
+            const formattedRows = rows.map(r => {
+                let mejaParsed;
+                try {
+                    mejaParsed = JSON.parse(r.meja);
+                } catch {
+                    mejaParsed = [r.meja];
+                }
+
+                return {
+                    ...r,
+                    meja: Array.isArray(mejaParsed) ? mejaParsed.join(", ") : mejaParsed
+                };
+            });
+
+            worksheet.addRows(formattedRows);
+
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+            res.setHeader(
+                "Content-Disposition",
+                "attachment; filename=reservasi.xlsx"
+            );
+
+            await workbook.xlsx.write(res);
+            res.end();
         });
-
-        worksheet.addRows(formattedRows);
-
-        res.setHeader(
-            "Content-Type",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
-        res.setHeader(
-            "Content-Disposition",
-            "attachment; filename=reservasi.xlsx"
-        );
-
-        await workbook.xlsx.write(res);
-        res.end();
-    });
+    } catch (error) {
+        console.error("Failed to export Excel file:", error);
+        res.status(500).send("An error occurred during the export process.");
+    }
 });
+
 
 /* ===============================
    START SERVER
 =================================*/
-app.listen(3000, () =>
-    console.log("Server running on http://localhost:3000")
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () =>
+    console.log(`Server running on http://localhost:${PORT}`)
 );
