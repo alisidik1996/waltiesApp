@@ -139,10 +139,11 @@ window.addEventListener("click", function (event) {
 =================================*/
 async function checkAvailability() {
   const tanggal = document.getElementById("checkTanggal").value;
-  const jam = document.getElementById("checkJam").value;
+  const jamMulai = document.getElementById("checkJamMulai").value;
+  const jamSelesai = document.getElementById("checkJamSelesai").value;
 
-  if (!tanggal || !jam) {
-    alert("Pilih tanggal dan jam dulu");
+  if (!tanggal || !jamMulai || !jamSelesai) {
+    alert("Pilih tanggal, jam mulai, dan jam selesai");
     return;
   }
 
@@ -150,7 +151,12 @@ async function checkAvailability() {
   const data = await res.json();
 
   const booked = data
-    .filter(r => r.tanggal === tanggal)
+    .filter(r => {
+        return r.tanggal === tanggal &&
+        ((jamMulai >= r.jam_mulai && jamMulai < r.jam_selesai) || 
+         (jamSelesai > r.jam_mulai && jamSelesai <= r.jam_selesai) ||
+         (jamMulai <= r.jam_mulai && jamSelesai >= r.jam_selesai))
+    })
     .map(r => {
       try {
         return JSON.parse(r.meja);
@@ -219,7 +225,8 @@ function renderTable() {
         <td>${r.no_hp}</td>
         <td>${r.hari}</td>
         <td>${r.tanggal}</td>
-        <td>${r.jam}</td>
+        <td>${r.jam_mulai}</td>
+        <td>${r.jam_selesai}</td>
         <td>${r.pax}</td>
         <td>${r.deposit}</td>
         <td>${areaDisplay}</td>

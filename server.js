@@ -14,6 +14,7 @@ const db = new sqlite3.Database("./database.db");
 /* ===============================
    CREATE TABLE
 =================================*/
+db.run("DROP TABLE IF EXISTS reservations");
 db.run(`
 CREATE TABLE IF NOT EXISTS reservations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,7 +22,8 @@ CREATE TABLE IF NOT EXISTS reservations (
     no_hp TEXT,
     hari TEXT,
     tanggal TEXT,
-    jam TEXT,
+    jam_mulai TEXT,
+    jam_selesai TEXT,
     pax INTEGER,
     deposit INTEGER,
     area TEXT,
@@ -105,7 +107,7 @@ app.post("/reservations", (req, res) => {
     }
 
     db.all(
-        `SELECT * FROM reservations WHERE tanggal=?`,
+        `SELECT * FROM reservations WHERE tanggal = ?`,
         [r.tanggal],
         (err, rows) => {
             if (err) {
@@ -114,19 +116,29 @@ app.post("/reservations", (req, res) => {
             }
 
             for (let existing of rows) {
-                let existingMeja;
-                try {
-                    existingMeja = JSON.parse(existing.meja);
-                } catch {
-                    existingMeja = [existing.meja];
-                }
+                // Check for time overlap
+                const newStart = r.jam_mulai;
+                const newEnd = r.jam_selesai;
+                const existingStart = existing.jam_mulai;
+                const existingEnd = existing.jam_selesai;
 
-                for (let meja of r.meja) {
-                    if (existingMeja.includes(meja)) {
-                        return res.status(409).json({
-                            error: true,
-                            message: `Meja ${meja} sudah dibooking di tanggal tersebut`
-                        });
+                const hasTimeOverlap = (newStart < existingEnd && newEnd > existingStart);
+
+                if (hasTimeOverlap) {
+                    let existingMeja;
+                    try {
+                        existingMeja = JSON.parse(existing.meja);
+                    } catch {
+                        existingMeja = [existing.meja];
+                    }
+    
+                    for (let meja of r.meja) {
+                        if (existingMeja.includes(meja)) {
+                            return res.status(409).json({
+                                error: true,
+                                message: `Meja ${meja} sudah dibooking di tanggal dan rentang jam tersebut`
+                            });
+                        }
                     }
                 }
             }
@@ -136,14 +148,15 @@ app.post("/reservations", (req, res) => {
 
             db.run(
                 `INSERT INTO reservations 
-                (nama,no_hp,hari,tanggal,jam,pax,deposit,area,meja,acara,diterima_oleh,tanggal_diterima,keterangan)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                (nama,no_hp,hari,tanggal,jam_mulai,jam_selesai,pax,deposit,area,meja,acara,diterima_oleh,tanggal_diterima,keterangan)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 [
                     r.nama,
                     r.no_hp,
                     r.hari,
                     r.tanggal,
-                    r.jam,
+                    r.jam_mulai,
+                    r.jam_selesai,
                     r.pax,
                     r.deposit,
                     areaString,
@@ -153,12 +166,12 @@ app.post("/reservations", (req, res) => {
                     r.tanggal_diterima,
                     r.keterangan
                 ],
-                function (err) { // Added 'err' parameter to catch potential errors
+                function (err) {
                     if (err) {
                         console.error("Error inserting reservation:", err.message);
                         return res.status(500).json({ error: true, message: "Could not save reservation." });
                     }
-                    res.status(201).json({ success: true, id: this.lastID }); // Return success and the new ID
+                    res.status(201).json({ success: true, id: this.lastID });
                 }
             );
         }
@@ -224,7 +237,8 @@ app.get("/export", async (req, res) => {
                 { header: "No HP", key: "no_hp", width: 15 },
                 { header: "Hari", key: "hari", width: 10 },
                 { header: "Tanggal", key: "tanggal", width: 12 },
-                { header: "Jam", key: "jam", width: 8 },
+                { header: "Jam Mulai", key: "jam_mulai", width: 10 },
+                { header: "Jam Selesai", key: "jam_selesai", width: 10 },
                 { header: "Pax", key: "pax", width: 8 },
                 { header: "Deposit", key: "deposit", width: 12 },
                 { header: "Area", key: "area", width: 15 },

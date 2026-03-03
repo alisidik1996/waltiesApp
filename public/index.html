@@ -29,7 +29,8 @@
             <h3>Cek Ketersediaan Meja</h3>
             <div class="availability-inputs">
                 <input type="date" id="checkTanggal">
-                <input type="time" id="checkJam">
+                <input type="time" id="checkJamMulai">
+                <input type="time" id="checkJamSelesai">
                 <button class="btn-primary" onclick="checkAvailability()">Cek</button>
             </div>
         </div>
@@ -61,7 +62,8 @@
                     <th>No HP</th>
                     <th>Hari</th>
                     <th>Tanggal</th>
-                    <th>Jam</th>
+                    <th>Jam Mulai</th>
+                    <th>Jam Selesai</th>
                     <th>Pax</th>
                     <th>Deposit</th>
                     <th>Area</th>
@@ -128,14 +130,19 @@
         
             <div class="form-row">
                 <div class="form-group">
-                    <label>Jam Reservasi</label>
-                    <input type="time" name="jam" required>
+                    <label>Jam Mulai</label>
+                    <input type="time" name="jam_mulai" required>
                 </div>
-        
+
                 <div class="form-group">
-                    <label>Number of Pax</label>
-                    <input type="number" name="pax">
+                    <label>Jam Selesai</label>
+                    <input type="time" name="jam_selesai" required>
                 </div>
+            </div>
+        
+            <div class="form-group">
+                <label>Number of Pax</label>
+                <input type="number" name="pax">
             </div>
         
             <div class="form-group">
